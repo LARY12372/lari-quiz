@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { neon } from '@neondatabase/serverless';
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
@@ -7,7 +7,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método não permitido' });
   }
 
-  // Autenticação via header: Authorization: Bearer <token>
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.replace('Bearer ', '').trim();
 
@@ -16,33 +15,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Lista todos os userIds registrados
-    const usuarios = await kv.smembers('usuarios');
+    const sql = neon(process.env.DATABASE_URL);
 
-    if (!usuarios || usuarios.length === 0) {
-      return res.status(200).json({ totalUsuarios: 0, usuarios: [] });
+    const respostas = await sql`
+      SELECT user_id, pergunta, resposta, acertou, criado_em
+      FROM respostas
+      ORDER BY criado_em DESC
+    `;
+
+    // Agrupa por usuário
+    const agrupado = {};
+    for (const r of respostas) {
+      if (!agrupado[r.user_id]) agrupado[r.user_id] = [];
+      agrupado[r.user_id].push(r);
     }
 
-    // Para cada usuário, busca as respostas
-    const resultado = await Promise.all(
-      usuarios.map(async (uid) => {
-        const raw = await kv.lrange(`respostas:${uid}`, 0, -1);
-        const respostas = raw.map(item =>
-          typeof item === 'string' ? JSON.parse(item) : item
-        );
-        return {
-          userId: uid,
-          totalRespostas: respostas.length,
-          totalAcertos: respostas.filter(r => r.acertou === 1).length,
-          respostas
-        };
-      })
-    );
+    const usuarios = Object.entries(agrupado).map(([uid, resps]) => ({
+      userId: uid,
+      totalRespostas: resps.length,
+      totalAcertos: resps.filter(r => r.acertou === 1).length,
+      respostas: resps
+    }));
 
-    return res.status(200).json({
-      totalUsuarios: resultado.length,
-      usuarios: resultado
-    });
+    return res.status(200).json({ totalUsuarios: usuarios.length, usuarios });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Erro interno' });

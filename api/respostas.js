@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { neon } from '@neondatabase/serverless';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -7,18 +7,19 @@ export default async function handler(req, res) {
 
   const { userId } = req.query;
 
-  // Valida userId
   if (!userId || !/^[a-zA-Z0-9\-]{8,64}$/.test(userId)) {
     return res.status(400).json({ error: 'userId inválido' });
   }
 
   try {
-    // Busca todas as respostas do usuário (lista no KV)
-    const raw = await kv.lrange(`respostas:${userId}`, 0, -1);
+    const sql = neon(process.env.DATABASE_URL);
 
-    const respostas = raw.map(item =>
-      typeof item === 'string' ? JSON.parse(item) : item
-    );
+    const respostas = await sql`
+      SELECT pergunta, resposta, explicacao, acertou, criado_em
+      FROM respostas
+      WHERE user_id = ${userId}
+      ORDER BY criado_em DESC
+    `;
 
     return res.status(200).json(respostas);
   } catch (err) {
