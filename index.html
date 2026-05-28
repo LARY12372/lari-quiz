@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz 💖</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="menu-screen" class="screen active">
+        <h1>Bem-vinda(o)! 💐</h1>
+        <button onclick="startGame()">Jogar 🎲</button>
+        <button onclick="showAcertos()">Seus acertos 🌟</button>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <h2>Quiz de Curiosidades 🎀</h2>
+        <div id="question-area"></div>
+        <div id="answers"></div>
+        <div id="explicacao" class="explicacao"></div>
+        <button id="next-btn" onclick="nextQuestion()" style="display:none;">Próxima Pergunta ➡️</button>
+        <br><br>
+        <button onclick="backToMenu()">Voltar</button>
+    </div>
+
+    <div id="acertos-screen" class="screen">
+        <h2>Seus acertos 🌟</h2>
+        <div id="acertos-count">Você ainda não começou o jogo!</div>
+        <button onclick="backToMenu()">Voltar</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

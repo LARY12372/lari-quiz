@@ -1,0 +1,12 @@
+{
+  "name": "lari-quiz",
+  "version": "2.0.0",
+  "description": "Quiz da Lari - hospedado na Vercel",
+  "type": "module",
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "@vercel/kv": "^2.0.0"
+  }
+}
