@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL);
+    const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING);
 
     const respostas = await sql`
       SELECT user_id, pergunta, resposta, acertou, criado_em
