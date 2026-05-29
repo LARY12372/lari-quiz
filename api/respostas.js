@@ -12,6 +12,7 @@ export default async function handler(req, res) {
   }
 
   const connString =
+    process.env.NEON_DB_URL ||
     process.env.POSTGRES_URL ||
     process.env.DATABASE_URL ||
     process.env.POSTGRES_URL_NON_POOLING ||
