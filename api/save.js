@@ -15,10 +15,20 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'userId inválido' });
   }
 
-  try {
-    const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING);
+  // Tenta todas as variáveis possíveis do Neon
+  const connString =
+    process.env.POSTGRES_URL ||
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.DATABASE_URL_UNPOOLED;
 
-    // Cria a tabela se não existir
+  if (!connString) {
+    return res.status(500).json({ error: 'Banco não configurado' });
+  }
+
+  try {
+    const sql = neon(connString);
+
     await sql`
       CREATE TABLE IF NOT EXISTS respostas (
         id SERIAL PRIMARY KEY,
@@ -33,12 +43,18 @@ export default async function handler(req, res) {
 
     await sql`
       INSERT INTO respostas (user_id, pergunta, resposta, explicacao, acertou)
-      VALUES (${userId}, ${String(pergunta).slice(0,500)}, ${String(resposta).slice(0,500)}, ${String(explicacao).slice(0,1000)}, ${acertou === 1 || acertou === true ? 1 : 0})
+      VALUES (
+        ${userId},
+        ${String(pergunta).slice(0, 500)},
+        ${String(resposta).slice(0, 500)},
+        ${String(explicacao).slice(0, 1000)},
+        ${acertou === 1 || acertou === true ? 1 : 0}
+      )
     `;
 
     return res.status(200).json({ ok: true });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Erro interno' });
+    console.error('ERRO SAVE:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 }

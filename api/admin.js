@@ -14,8 +14,18 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Não autorizado' });
   }
 
+  const connString =
+    process.env.POSTGRES_URL ||
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.DATABASE_URL_UNPOOLED;
+
+  if (!connString) {
+    return res.status(500).json({ error: 'Banco não configurado' });
+  }
+
   try {
-    const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING);
+    const sql = neon(connString);
 
     const respostas = await sql`
       SELECT user_id, pergunta, resposta, acertou, criado_em
@@ -23,7 +33,6 @@ export default async function handler(req, res) {
       ORDER BY criado_em DESC
     `;
 
-    // Agrupa por usuário
     const agrupado = {};
     for (const r of respostas) {
       if (!agrupado[r.user_id]) agrupado[r.user_id] = [];
@@ -39,7 +48,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ totalUsuarios: usuarios.length, usuarios });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Erro interno' });
+    console.error('ERRO ADMIN:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 }

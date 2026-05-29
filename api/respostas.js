@@ -11,8 +11,18 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'userId inválido' });
   }
 
+  const connString =
+    process.env.POSTGRES_URL ||
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.DATABASE_URL_UNPOOLED;
+
+  if (!connString) {
+    return res.status(500).json({ error: 'Banco não configurado' });
+  }
+
   try {
-    const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING);
+    const sql = neon(connString);
 
     const respostas = await sql`
       SELECT pergunta, resposta, explicacao, acertou, criado_em
@@ -23,7 +33,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json(respostas);
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Erro interno' });
+    console.error('ERRO RESPOSTAS:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 }
